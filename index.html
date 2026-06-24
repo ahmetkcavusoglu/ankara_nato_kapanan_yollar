@@ -8,42 +8,53 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--red:#dc2626;--blue:#2563eb;--bg:#f8f9fa;--surface:#fff;--border:#e5e7eb;--text:#111827;--muted:#6b7280}
+:root{--red:#dc2626;--blue:#2563eb;--green:#16a34a;--bg:#f8f9fa;--surface:#fff;--border:#e5e7eb;--text:#111827;--muted:#6b7280}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 
-header{background:#0f172a;color:#fff;padding:.6rem 1rem;display:flex;align-items:center;gap:.7rem;flex-shrink:0;z-index:1000}
+header{background:#0f172a;color:#fff;padding:.55rem 1rem;display:flex;align-items:center;gap:.7rem;flex-shrink:0;z-index:1000}
 .logo{background:var(--red);color:#fff;font-size:.56rem;font-weight:700;letter-spacing:.07em;padding:.2rem .42rem;border-radius:4px;text-transform:uppercase;flex-shrink:0;line-height:1.3;text-align:center}
-header h1{font-size:.88rem;font-weight:600;flex:1;line-height:1.2}
-header p{font-size:.62rem;color:#94a3b8;margin-top:1px}
+header h1{font-size:.86rem;font-weight:600;flex:1;line-height:1.2}
+header p{font-size:.6rem;color:#94a3b8;margin-top:1px}
 
-#panel{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:.7rem 1rem;z-index:900;position:relative}
-.search-wrap{position:relative}
-#addr-input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:.55rem .75rem;font-size:.88rem;outline:none}
-#addr-input:focus{border-color:var(--blue)}
+#panel{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:.65rem 1rem;z-index:900;position:relative;display:flex;flex-direction:column;gap:.45rem}
 
-#suggest{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:1001;display:none;max-height:240px;overflow-y:auto}
-.sug-item{padding:.55rem .75rem;font-size:.82rem;cursor:pointer;border-bottom:1px solid #f1f1f1;line-height:1.35}
+.field{position:relative;display:flex;align-items:center;gap:.5rem}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot-a{background:var(--green)}
+.dot-b{background:var(--red)}
+.addr-in{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:.5rem .7rem;font-size:.85rem;outline:none;width:100%}
+.addr-in:focus{border-color:var(--blue)}
+.clr{background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:0 .2rem;flex-shrink:0}
+
+.suggest{position:absolute;top:calc(100% + 3px);left:18px;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:1001;display:none;max-height:220px;overflow-y:auto}
+.sug-item{padding:.5rem .7rem;font-size:.81rem;cursor:pointer;border-bottom:1px solid #f1f1f1;line-height:1.3}
 .sug-item:last-child{border-bottom:none}
 .sug-item:hover,.sug-item.active{background:#f0f6ff}
-.sug-item .main{font-weight:600;color:var(--text)}
-.sug-item .sub{font-size:.72rem;color:var(--muted);margin-top:1px}
-.sug-loading{padding:.55rem .75rem;font-size:.78rem;color:var(--muted)}
+.sug-item .main{font-weight:600}
+.sug-item .sub{font-size:.71rem;color:var(--muted);margin-top:1px}
+.sug-loading{padding:.5rem .7rem;font-size:.77rem;color:var(--muted)}
 
-#result-box{display:none;margin-top:.55rem;border-radius:8px;padding:.55rem .8rem;font-size:.8rem;font-weight:500;line-height:1.45}
+.btn-row{display:flex;gap:.45rem}
+#route-btn{flex:1;background:#0f172a;color:#fff;border:none;border-radius:8px;padding:.55rem;font-size:.82rem;font-weight:600;cursor:pointer}
+#route-btn:disabled{opacity:.4;cursor:default}
+#swap-btn{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:.55rem .7rem;font-size:.9rem;cursor:pointer}
+
+#result-box{display:none;border-radius:8px;padding:.55rem .8rem;font-size:.8rem;font-weight:500;line-height:1.45}
 .result-safe{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
 .result-closed{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}
 .result-warn{background:#fef9c3;color:#854d0e;border:1px solid #fef08a}
+#result-box .meta{font-weight:400;font-size:.74rem;margin-top:3px;opacity:.85}
 
 #map{flex:1;min-height:0;background:#e8eaf0}
 
 .leaflet-popup-content-wrapper{border-radius:10px;border:1px solid var(--border)}
-.leaflet-popup-content{margin:10px 13px;font-size:.82rem;line-height:1.5}
-.pop-title{font-weight:700;font-size:.88rem;margin-bottom:3px}
-.pop-tag{display:inline-block;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.13rem .45rem;border-radius:4px;margin-top:5px;background:#fee2e2;color:#b91c1c}
+.leaflet-popup-content{margin:9px 12px;font-size:.81rem;line-height:1.5}
+.pop-title{font-weight:700;font-size:.86rem;margin-bottom:2px}
+.pop-tag{display:inline-block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.12rem .42rem;border-radius:4px;margin-top:4px;background:#fee2e2;color:#b91c1c}
 
 #status{position:absolute;bottom:1.3rem;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.96);border:1px solid var(--border);color:var(--muted);font-size:.75rem;padding:.45rem 1rem;border-radius:20px;z-index:999;display:none;box-shadow:0 2px 12px rgba(0,0,0,.08)}
 
-.src{font-size:.6rem;color:#9ca3af;padding:.4rem 1rem 0;line-height:1.3}
+.src{font-size:.58rem;color:#9ca3af;padding:.35rem 1rem 0;line-height:1.3}
 </style>
 </head>
 <body>
@@ -51,18 +62,30 @@ header p{font-size:.62rem;color:#94a3b8;margin-top:1px}
 <header>
   <span class="logo">NATO<br>2026</span>
   <div>
-    <h1>Ankara Kapalı Yollar Haritası</h1>
+    <h1>Ankara Kapalı Yollar & Yol Tarifi</h1>
     <p>36. NATO Zirvesi · 28 Haziran – 10 Temmuz 2026</p>
   </div>
 </header>
 
 <div id="panel">
-  <div class="search-wrap">
-    <input id="addr-input" type="text" placeholder="Adres veya cadde arayın… örn: Emek, Cinnah Caddesi" autocomplete="off"/>
-    <div id="suggest"></div>
+  <div class="field">
+    <span class="dot dot-a"></span>
+    <input class="addr-in" id="in-a" type="text" placeholder="Nereden? örn: Emek, Kızılay" autocomplete="off"/>
+    <button class="clr" onclick="clearField('a')" title="Temizle">×</button>
+    <div class="suggest" id="sug-a"></div>
+  </div>
+  <div class="field">
+    <span class="dot dot-b"></span>
+    <input class="addr-in" id="in-b" type="text" placeholder="Nereye? örn: Çankaya, Bilkent" autocomplete="off"/>
+    <button class="clr" onclick="clearField('b')" title="Temizle">×</button>
+    <div class="suggest" id="sug-b"></div>
+  </div>
+  <div class="btn-row">
+    <button id="swap-btn" onclick="swap()" title="Yer değiştir">⇅</button>
+    <button id="route-btn" onclick="findRoute()" disabled>Kapalı yollardan kaçınan rota bul</button>
   </div>
   <div id="result-box"></div>
-  <div class="src">Kaynak: "Nato Zirvesi Kapalı Caddeler" canlı harita verisi · Adres arama: OpenStreetMap</div>
+  <div class="src">Kaynak: "Nato Zirvesi Kapalı Caddeler" canlı veri · Adres & rota: OpenStreetMap / OSRM. Rota motoru kapalı caddeleri resmî olarak bilmez; alternatifler arasından kapalı yola değmeyeni seçeriz. Yola çıkmadan Valilik/Emniyet duyurularını kontrol edin.</div>
 </div>
 
 <div id="map"></div>
@@ -74,13 +97,16 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
   attribution:'&copy; CARTO &copy; OpenStreetMap',subdomains:'abcd',maxZoom:19}).addTo(map);
 
 const roadLayer=L.layerGroup().addTo(map);
+const routeLayer=L.layerGroup().addTo(map);
 const status=document.getElementById('status');
 status.style.display='block';
+
+// Kapalı yol segmentlerini sakla (yakınlık testi için)
+let closedSegments=[]; // her biri [[lat,lng],...]
 
 // ═══ KML CANLI VERİ ══════════════════════════════════════════════════════════
 const KML_URL='https://www.google.com/maps/d/u/0/kml?mid=1N4D1di4x0Qm2eWkeKTHQMWso3Rvn4VY&forcekml=1';
 const PROXY='https://api.allorigins.win/raw?url=';
-
 function parseCoords(str){return str.trim().split(/\s+/).map(c=>{const[ln,la]=c.split(',').map(Number);return[la,ln];});}
 
 fetch(PROXY+encodeURIComponent(KML_URL))
@@ -94,122 +120,168 @@ fetch(PROXY+encodeURIComponent(KML_URL))
       const name=pm.querySelector('name')?.textContent||'Kapalı Bölge';
       const desc=pm.querySelector('description')?.textContent||'';
       const lc=pm.querySelector('LineString coordinates');
-      if(lc){const coords=parseCoords(lc.textContent);
-        const pl=L.polyline(coords,{color:'#dc2626',weight:5,opacity:.85,dashArray:'8 4'})
-          .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.76rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}<span class="pop-tag">⛔ Trafiğe Kapalı</span>`)
-          .addTo(roadLayer);
-        all.push(pl);}
+      if(lc){const coords=parseCoords(lc.textContent);closedSegments.push(coords);
+        all.push(L.polyline(coords,{color:'#dc2626',weight:5,opacity:.85,dashArray:'8 4'})
+          .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}<span class="pop-tag">⛔ Trafiğe Kapalı</span>`).addTo(roadLayer));}
       const pc=pm.querySelector('Point coordinates');
-      if(pc){const[ln,la]=pc.textContent.trim().split(',').map(Number);
-        const mk=L.circleMarker([la,ln],{radius:7,fillColor:'#dc2626',color:'#fff',weight:2,fillOpacity:.9})
-          .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.76rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}`)
-          .addTo(roadLayer);
-        all.push(mk);}
+      if(pc){const[ln,la]=pc.textContent.trim().split(',').map(Number);closedSegments.push([[la,ln]]);
+        all.push(L.circleMarker([la,ln],{radius:7,fillColor:'#dc2626',color:'#fff',weight:2,fillOpacity:.9})
+          .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}`).addTo(roadLayer));}
       const poly=pm.querySelector('Polygon outerBoundaryIs LinearRing coordinates');
-      if(poly){const coords=parseCoords(poly.textContent);
-        const pg=L.polygon(coords,{color:'#dc2626',fillColor:'#dc2626',fillOpacity:.1,weight:2})
-          .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.76rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}`)
-          .addTo(roadLayer);
-        all.push(pg);}
+      if(poly){const coords=parseCoords(poly.textContent);closedSegments.push(coords);
+        all.push(L.polygon(coords,{color:'#dc2626',fillColor:'#dc2626',fillOpacity:.1,weight:2})
+          .bindPopup(`<div class="pop-title">${name}</div>`).addTo(roadLayer));}
     });
-    if(all.length){const g=L.featureGroup(all);try{map.fitBounds(g.getBounds(),{padding:[40,40]});}catch(e){}}
+    if(all.length){try{map.fitBounds(L.featureGroup(all).getBounds(),{padding:[40,40]});}catch(e){}}
     status.style.display='none';
   })
-  .catch(()=>{
-    status.textContent='Veri yüklenemedi — alternatif görünüm açılıyor…';
-    setTimeout(()=>{document.getElementById('map').innerHTML=`<iframe src="https://www.google.com/maps/d/u/0/embed?mid=1N4D1di4x0Qm2eWkeKTHQMWso3Rvn4VY&ll=39.932090376723096,32.62557501490355&z=13" style="width:100%;height:100%;border:none"></iframe>`;status.style.display='none';},1200);
+  .catch(()=>{status.textContent='Kapalı yol verisi yüklenemedi';setTimeout(()=>status.style.display='none',2000);});
+
+// ═══ ADRES AUTOCOMPLETE (iki alan) ═══════════════════════════════════════════
+const endpoints={a:{lat:null,lng:null,label:null},b:{lat:null,lng:null,label:null}};
+const debounce={a:null,b:null};
+const activeIdx={a:-1,b:-1};
+const sugData={a:[],b:[]};
+
+['a','b'].forEach(k=>{
+  const inp=document.getElementById('in-'+k);
+  const box=document.getElementById('sug-'+k);
+  inp.addEventListener('input',()=>{
+    endpoints[k].lat=null;updateRouteBtn();
+    const q=inp.value.trim();
+    clearTimeout(debounce[k]);
+    if(q.length<2){box.style.display='none';return;}
+    box.innerHTML='<div class="sug-loading">Aranıyor…</div>';box.style.display='block';
+    debounce[k]=setTimeout(()=>fetchSug(k,q),300);
   });
-
-// ═══ ADRES ARAMA — ÖNERİLİ AUTOCOMPLETE ══════════════════════════════════════
-const input=document.getElementById('addr-input');
-const sugBox=document.getElementById('suggest');
-let debounce,activeIdx=-1,suggestions=[];
-
-input.addEventListener('input',()=>{
-  const q=input.value.trim();
-  document.getElementById('result-box').style.display='none';
-  clearTimeout(debounce);
-  if(q.length<2){sugBox.style.display='none';return;}
-  sugBox.innerHTML='<div class="sug-loading">Aranıyor…</div>';
-  sugBox.style.display='block';
-  debounce=setTimeout(()=>fetchSuggestions(q),300);
+  inp.addEventListener('keydown',e=>{
+    const items=box.querySelectorAll('.sug-item');
+    if(!items.length)return;
+    if(e.key==='ArrowDown'){e.preventDefault();activeIdx[k]=Math.min(activeIdx[k]+1,items.length-1);upAct(k,items);}
+    else if(e.key==='ArrowUp'){e.preventDefault();activeIdx[k]=Math.max(activeIdx[k]-1,0);upAct(k,items);}
+    else if(e.key==='Enter'){e.preventDefault();pick(k,activeIdx[k]>=0?activeIdx[k]:0);}
+    else if(e.key==='Escape')box.style.display='none';
+  });
 });
 
-async function fetchSuggestions(q){
+async function fetchSug(k,q){
+  const box=document.getElementById('sug-'+k);
   try{
-    // Ankara'ya viewbox ile sınırla (sol,üst,sağ,alt) + bounded
     const vb='32.5,40.1,33.0,39.7';
-    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&countrycodes=tr&viewbox=${vb}&bounded=1&addressdetails=1&accept-language=tr`;
-    const r=await fetch(url);
-    suggestions=await r.json();
-    renderSuggestions();
-  }catch(e){sugBox.innerHTML='<div class="sug-loading">Arama yapılamadı</div>';}
+    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&countrycodes=tr&viewbox=${vb}&bounded=1&accept-language=tr`;
+    sugData[k]=await(await fetch(url)).json();
+    renderSug(k);
+  }catch(e){box.innerHTML='<div class="sug-loading">Arama yapılamadı</div>';}
+}
+function renderSug(k){
+  const box=document.getElementById('sug-'+k);activeIdx[k]=-1;
+  if(!sugData[k].length){box.innerHTML='<div class="sug-loading">Sonuç bulunamadı</div>';return;}
+  box.innerHTML=sugData[k].map((s,i)=>{const p=s.display_name.split(',');
+    return `<div class="sug-item" data-i="${i}"><div class="main">${p[0].trim()}</div><div class="sub">${p.slice(1,4).join(',').trim()}</div></div>`;}).join('');
+  box.querySelectorAll('.sug-item').forEach(el=>el.addEventListener('click',()=>pick(k,+el.dataset.i)));
+}
+function upAct(k,items){items.forEach((el,i)=>el.classList.toggle('active',i===activeIdx[k]));if(items[activeIdx[k]])items[activeIdx[k]].scrollIntoView({block:'nearest'});}
+function pick(k,i){
+  const s=sugData[k][i];if(!s)return;
+  document.getElementById('in-'+k).value=s.display_name.split(',')[0].trim();
+  document.getElementById('sug-'+k).style.display='none';
+  endpoints[k]={lat:+s.lat,lng:+s.lon,label:s.display_name.split(',')[0].trim()};
+  placeEndpoint(k);
+  updateRouteBtn();
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.field')){document.getElementById('sug-a').style.display='none';document.getElementById('sug-b').style.display='none';}});
+
+const epMarkers={a:null,b:null};
+function placeEndpoint(k){
+  if(epMarkers[k])epMarkers[k].remove();
+  const color=k==='a'?'#16a34a':'#dc2626';
+  const pin=L.divIcon({className:'',html:`<div style="width:20px;height:20px;background:${color};border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>`,iconSize:[20,20],iconAnchor:[10,20]});
+  epMarkers[k]=L.marker([endpoints[k].lat,endpoints[k].lng],{icon:pin}).addTo(map);
+}
+function clearField(k){
+  document.getElementById('in-'+k).value='';
+  endpoints[k]={lat:null,lng:null,label:null};
+  if(epMarkers[k]){epMarkers[k].remove();epMarkers[k]=null;}
+  routeLayer.clearLayers();
+  document.getElementById('result-box').style.display='none';
+  updateRouteBtn();
+}
+function swap(){
+  const ta=document.getElementById('in-a').value,tb=document.getElementById('in-b').value;
+  document.getElementById('in-a').value=tb;document.getElementById('in-b').value=ta;
+  const tmp=endpoints.a;endpoints.a=endpoints.b;endpoints.b=tmp;
+  if(endpoints.a.lat)placeEndpoint('a');else if(epMarkers.a){epMarkers.a.remove();epMarkers.a=null;}
+  if(endpoints.b.lat)placeEndpoint('b');else if(epMarkers.b){epMarkers.b.remove();epMarkers.b=null;}
+}
+function updateRouteBtn(){document.getElementById('route-btn').disabled=!(endpoints.a.lat&&endpoints.b.lat);}
+
+// ═══ ROTA — KAPALI YOLDAN KAÇINMA ════════════════════════════════════════════
+// Bir rota noktası herhangi bir kapalı segmente bu mesafeden yakınsa "kapalıya değiyor" sayılır
+const HIT_METERS=60;
+
+function dist(lat1,lng1,lat2,lng2){
+  const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+// Rota geometrisi (lng,lat dizisi) kapalı segmentlere değiyor mu? Kaç ihlal?
+function countHits(geometry){
+  let hits=0;const seen=new Set();
+  for(const [lng,lat] of geometry){
+    for(let si=0;si<closedSegments.length;si++){
+      for(const [clat,clng] of closedSegments[si]){
+        if(dist(lat,lng,clat,clng)<HIT_METERS){if(!seen.has(si)){seen.add(si);hits++;}break;}
+      }
+    }
+  }
+  return hits;
 }
 
-function renderSuggestions(){
-  activeIdx=-1;
-  if(!suggestions.length){sugBox.innerHTML='<div class="sug-loading">Sonuç bulunamadı</div>';return;}
-  sugBox.innerHTML=suggestions.map((s,i)=>{
-    const parts=s.display_name.split(',');
-    const main=parts[0].trim();
-    const sub=parts.slice(1,4).join(',').trim();
-    return `<div class="sug-item" data-i="${i}"><div class="main">${main}</div><div class="sub">${sub}</div></div>`;
-  }).join('');
-  sugBox.querySelectorAll('.sug-item').forEach(el=>{
-    el.addEventListener('click',()=>selectSuggestion(+el.dataset.i));
-  });
-}
-
-function placeMarker(lat,lng){
-  if(window._am)window._am.remove();
-  const pin=L.divIcon({
-    className:'',
-    html:`<div style="width:22px;height:22px;background:#2563eb;border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>`,
-    iconSize:[22,22],iconAnchor:[11,22]
-  });
-  window._am=L.marker([lat,lng],{icon:pin}).addTo(map);
-}
-
-function selectSuggestion(i){
-  const s=suggestions[i];
-  if(!s)return;
-  input.value=s.display_name.split(',')[0].trim();
-  sugBox.style.display='none';
-  const lat=+s.lat,lng=+s.lon;
-  placeMarker(lat,lng);
-  map.setView([lat,lng],15);
-  checkProximity(lat,lng,s.display_name);
-}
-
-// Klavye navigasyonu
-input.addEventListener('keydown',e=>{
-  const items=sugBox.querySelectorAll('.sug-item');
-  if(!items.length)return;
-  if(e.key==='ArrowDown'){e.preventDefault();activeIdx=Math.min(activeIdx+1,items.length-1);updateActive(items);}
-  else if(e.key==='ArrowUp'){e.preventDefault();activeIdx=Math.max(activeIdx-1,0);updateActive(items);}
-  else if(e.key==='Enter'){e.preventDefault();selectSuggestion(activeIdx>=0?activeIdx:0);}
-  else if(e.key==='Escape'){sugBox.style.display='none';}
-});
-function updateActive(items){items.forEach((el,i)=>el.classList.toggle('active',i===activeIdx));if(items[activeIdx])items[activeIdx].scrollIntoView({block:'nearest'});}
-
-// Dışarı tıklayınca kapat
-document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap'))sugBox.style.display='none';});
-
-// Kapalı yola yakınlık kontrolü
-function checkProximity(lat,lng,label){
+async function findRoute(){
+  if(!(endpoints.a.lat&&endpoints.b.lat))return;
   const box=document.getElementById('result-box');
-  box.style.display='block';
-  let min=Infinity;
-  roadLayer.eachLayer(l=>{
-    let pts=[];
-    if(l.getLatLngs){const ll=l.getLatLngs();pts=Array.isArray(ll[0])?ll.flat():ll;}
-    else if(l.getLatLng){pts=[l.getLatLng()];}
-    pts.forEach(p=>{const d=Math.sqrt((p.lat-lat)**2+(p.lng-lng)**2)*111000;if(d<min)min=d;});
-  });
-  if(min===Infinity){box.className='result-warn';box.innerHTML=`📍 Konum haritada işaretlendi.<br><small style="font-weight:400">Kapalı yol verisi henüz yüklenmedi</small>`;return;}
-  if(min<300){box.className='result-closed';box.innerHTML=`⛔ Bu konum kapalı bölgede veya çok yakın.<br><small style="font-weight:400">En yakın kapalı yola ${Math.round(min)} m</small>`;}
-  else if(min<800){box.className='result-warn';box.innerHTML=`⚠️ Kapalı yola yakın, dikkatli olun.<br><small style="font-weight:400">${Math.round(min)} m uzakta</small>`;}
-  else{box.className='result-safe';box.innerHTML=`✅ Bu konum kapalı bölge dışında.<br><small style="font-weight:400">En yakın kapalı yol ${Math.round(min)} m uzakta</small>`;}
+  box.style.display='block';box.className='result-warn';box.innerHTML='Rota hesaplanıyor…';
+  routeLayer.clearLayers();
+  const {a,b}=endpoints;
+  try{
+    // OSRM'den birden fazla alternatif iste
+    const url=`https://router.project-osrm.org/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson&alternatives=3`;
+    const res=await fetch(url);
+    const data=await res.json();
+    if(!data.routes||!data.routes.length){box.className='result-warn';box.innerHTML='⚠️ Rota bulunamadı.';return;}
+
+    // Her rotayı kapalı yola değme sayısına göre değerlendir
+    const evaluated=data.routes.map(r=>({route:r,hits:countHits(r.geometry.coordinates)}));
+    evaluated.sort((x,y)=>x.hits-y.hits||x.route.distance-y.route.distance);
+    const best=evaluated[0];
+    const g=best.route.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+    const km=(best.route.distance/1000).toFixed(1);
+    const min=Math.round(best.route.duration/60);
+
+    // Diğer (kapalı) alternatifleri soluk göster
+    evaluated.slice(1).forEach(ev=>{
+      if(ev.hits>best.hits){
+        const gg=ev.route.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+        L.polyline(gg,{color:'#9ca3af',weight:3,opacity:.35,dashArray:'4 6'}).addTo(routeLayer);
+      }
+    });
+
+    // En iyi rotayı çiz
+    const color=best.hits===0?'#16a34a':'#ea580c';
+    L.polyline(g,{color,weight:6,opacity:.9}).addTo(routeLayer);
+    // Başlangıç/varış zaten işaretli; rotayı görünür yap
+    try{map.fitBounds(L.polyline(g).getBounds(),{padding:[50,50]});}catch(e){}
+
+    if(best.hits===0){
+      box.className='result-safe';
+      box.innerHTML=`✅ Kapalı yola değmeyen rota bulundu.<div class="meta">${km} km · ~${min} dk · ${a.label} → ${b.label}</div>`;
+    }else{
+      box.className='result-closed';
+      box.innerHTML=`⚠️ Tamamen temiz rota bulunamadı. En az kapalı yoldan geçen rota gösteriliyor (${best.hits} kapalı kesişim).<div class="meta">${km} km · ~${min} dk · Turuncu = dikkat. Yola çıkmadan kontrol edin.</div>`;
+    }
+  }catch(e){
+    box.className='result-warn';box.innerHTML='⚠️ Rota servisine ulaşılamadı. Lütfen tekrar deneyin.';
+  }
 }
 </script>
 </body>
