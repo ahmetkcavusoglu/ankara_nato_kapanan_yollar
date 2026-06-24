@@ -4,11 +4,9 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>NATO 2026 – Ankara Kapalı Yollar</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--red:#dc2626;--blue:#2563eb;--green:#16a34a;--bg:#f8f9fa;--surface:#fff;--border:#e5e7eb;--text:#111827;--muted:#6b7280}
+:root{--red:#dc2626;--blue:#1a73e8;--bg:#f8f9fa;--surface:#fff;--border:#e5e7eb;--text:#111827;--muted:#6b7280}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 
 header{background:#0f172a;color:#fff;padding:.55rem 1rem;display:flex;align-items:center;gap:.7rem;flex-shrink:0;z-index:1000}
@@ -16,37 +14,20 @@ header{background:#0f172a;color:#fff;padding:.55rem 1rem;display:flex;align-item
 header h1{font-size:.86rem;font-weight:600;flex:1;line-height:1.2}
 header p{font-size:.6rem;color:#94a3b8;margin-top:1px}
 
-#panel{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:.7rem 1rem;z-index:900;position:relative}
-.search-wrap{position:relative}
-#addr-input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:.55rem .75rem;font-size:.88rem;outline:none}
-#addr-input:focus{border-color:var(--blue)}
+#panel{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:.7rem 1rem;z-index:900;display:flex;flex-direction:column;gap:.5rem}
+.search-row{display:flex;gap:.5rem}
+#dest{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:.55rem .75rem;font-size:.88rem;outline:none}
+#dest:focus{border-color:var(--blue)}
+#go{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.quick{display:flex;gap:.4rem;flex-wrap:wrap}
+.q-btn{background:var(--bg);border:1.5px solid var(--border);border-radius:18px;padding:.3rem .7rem;font-size:.74rem;font-weight:600;cursor:pointer;color:var(--text)}
+.q-btn:hover{border-color:var(--blue);color:var(--blue)}
+.hint{font-size:.68rem;color:var(--muted);line-height:1.4}
 
-#suggest{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:1001;display:none;max-height:240px;overflow-y:auto}
-.sug-item{padding:.55rem .75rem;font-size:.82rem;cursor:pointer;border-bottom:1px solid #f1f1f1;line-height:1.35}
-.sug-item:last-child{border-bottom:none}
-.sug-item:hover,.sug-item.active{background:#f0f6ff}
-.sug-item .main{font-weight:600;color:var(--text)}
-.sug-item .sub{font-size:.72rem;color:var(--muted);margin-top:1px}
-.sug-loading{padding:.55rem .75rem;font-size:.78rem;color:var(--muted)}
+#map-wrap{flex:1;min-height:0;position:relative}
+#map-wrap iframe{width:100%;height:100%;border:none;display:block}
 
-#result-box{display:none;margin-top:.55rem;border-radius:8px;padding:.6rem .8rem;font-size:.82rem;font-weight:500;line-height:1.5}
-.result-safe{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
-.result-closed{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}
-.result-warn{background:#fef9c3;color:#854d0e;border:1px solid #fef08a}
-#result-box .meta{font-weight:400;font-size:.75rem;margin-top:3px;opacity:.85}
-.gmaps-btn{display:inline-flex;align-items:center;gap:.4rem;margin-top:.55rem;background:#1a73e8;color:#fff;text-decoration:none;font-size:.8rem;font-weight:600;padding:.45rem .8rem;border-radius:7px}
-.gmaps-btn:hover{background:#1557b0}
-
-#map{flex:1;min-height:0;background:#e8eaf0}
-
-.leaflet-popup-content-wrapper{border-radius:10px;border:1px solid var(--border)}
-.leaflet-popup-content{margin:9px 12px;font-size:.81rem;line-height:1.5}
-.pop-title{font-weight:700;font-size:.86rem;margin-bottom:2px}
-.pop-tag{display:inline-block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.12rem .42rem;border-radius:4px;margin-top:4px;background:#fee2e2;color:#b91c1c}
-
-#status{position:absolute;bottom:1.3rem;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.96);border:1px solid var(--border);color:var(--muted);font-size:.75rem;padding:.45rem 1rem;border-radius:20px;z-index:999;display:none;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-
-.src{font-size:.58rem;color:#9ca3af;padding:.4rem 1rem 0;line-height:1.3}
+.src{font-size:.58rem;color:#9ca3af;padding:.4rem 1rem;background:var(--surface);border-top:1px solid var(--border);line-height:1.3;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -60,181 +41,47 @@ header p{font-size:.6rem;color:#94a3b8;margin-top:1px}
 </header>
 
 <div id="panel">
-  <div class="search-wrap">
-    <input id="addr-input" type="text" placeholder="Gideceğiniz adresi arayın… örn: Cinnah Caddesi, Kızılay" autocomplete="off"/>
-    <div id="suggest"></div>
+  <div class="search-row">
+    <input id="dest" type="text" placeholder="Nereye gideceksiniz? örn: Bilkent, AŞTİ, Kızılay"/>
+    <button id="go" onclick="route()">🧭 Yol Tarifi</button>
   </div>
-  <div id="result-box"></div>
-  <div class="src">Kaynak: "Nato Zirvesi Kapalı Caddeler" canlı veri · Adres: OpenStreetMap. Yol tarifi için Google Maps güncel kapatma verisini kullanır. Yola çıkmadan Valilik/Emniyet duyurularını kontrol edin.</div>
+  <div class="quick">
+    <button class="q-btn" onclick="quick('Esenboğa Havalimanı, Ankara')">✈️ Esenboğa</button>
+    <button class="q-btn" onclick="quick('AŞTİ Ankara')">🚌 AŞTİ</button>
+    <button class="q-btn" onclick="quick('Kızılay, Ankara')">🏙️ Kızılay</button>
+    <button class="q-btn" onclick="quick('Bilkent, Ankara')">🎓 Bilkent</button>
+    <button class="q-btn" onclick="quickCurrent()">📍 Konumumdan</button>
+  </div>
+  <div class="hint">Aşağıdaki harita kapalı caddeleri gösterir. Yol tarifi butonu, mevcut konumunuzdan hedefe Google Maps'te <strong>güncel yol kapatmalarına göre</strong> rota açar.</div>
 </div>
 
-<div id="map"></div>
-<div id="status">Harita verileri yükleniyor…</div>
+<div id="map-wrap">
+  <iframe src="https://www.google.com/maps/d/u/0/embed?mid=1N4D1di4x0Qm2eWkeKTHQMWso3Rvn4VY&ll=39.932090376723096,32.62557501490355&z=12" title="NATO Zirvesi Kapalı Caddeler"></iframe>
+</div>
+
+<div class="src">Kaynak: "Nato Zirvesi Kapalı Caddeler" Google haritası · Yol tarifi: Google Maps güncel trafik/kapatma verisi. Yola çıkmadan Valilik &amp; Emniyet duyurularını kontrol edin.</div>
 
 <script>
-const map=L.map('map',{center:[39.9150,32.8100],zoom:12,zoomControl:true});
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
-  attribution:'&copy; CARTO &copy; OpenStreetMap',subdomains:'abcd',maxZoom:19}).addTo(map);
-
-const roadLayer=L.layerGroup().addTo(map);
-const status=document.getElementById('status');
-status.style.display='block';
-let closedSegments=[];
-
-// ═══ KML CANLI VERİ (çoklu proxy) ════════════════════════════════════════════
-const KML_URL='https://www.google.com/maps/d/u/0/kml?mid=1N4D1di4x0Qm2eWkeKTHQMWso3Rvn4VY&forcekml=1';
-const PROXIES=[
-  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-  u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
-  u=>'https://thingproxy.freeboard.io/fetch/'+u,
-  u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u)
-];
-function parseCoords(str){return str.trim().split(/\s+/).map(c=>{const[ln,la]=c.split(',').map(Number);return[la,ln];});}
-
-async function loadKML(){
-  for(let i=0;i<PROXIES.length;i++){
-    try{
-      status.textContent=`Kapalı yol verisi yükleniyor… (${i+1}/${PROXIES.length})`;
-      const r=await fetch(PROXIES[i](KML_URL),{signal:AbortSignal.timeout(8000)});
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      const kml=await r.text();
-      if(!kml||kml.length<50||!kml.includes('Placemark'))throw new Error('geçersiz');
-      if(renderKML(kml))return;
-      throw new Error('placemark yok');
-    }catch(e){console.warn('Proxy '+(i+1)+':',e.message);}
-  }
-  status.textContent='Canlı veri alınamadı — Google harita gösteriliyor…';
-  setTimeout(()=>{document.getElementById('map').innerHTML=`<iframe src="https://www.google.com/maps/d/u/0/embed?mid=1N4D1di4x0Qm2eWkeKTHQMWso3Rvn4VY&ll=39.932090376723096,32.62557501490355&z=13" style="width:100%;height:100%;border:none"></iframe>`;status.style.display='none';},1500);
+function openMaps(dest){
+  // Başlangıç boş → Google "konumunuz"u otomatik kullanır
+  const url=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}&travelmode=driving`;
+  window.open(url,'_blank','noopener');
 }
-
-function renderKML(kml){
-  const doc=new DOMParser().parseFromString(kml,'text/xml');
-  const pms=doc.querySelectorAll('Placemark');
-  if(!pms.length)return false;
-  roadLayer.clearLayers();closedSegments=[];
-  const all=[];
-  pms.forEach(pm=>{
-    const name=pm.querySelector('name')?.textContent||'Kapalı Bölge';
-    const desc=pm.querySelector('description')?.textContent||'';
-    const lc=pm.querySelector('LineString coordinates');
-    if(lc){const coords=parseCoords(lc.textContent);closedSegments.push({name,coords});
-      all.push(L.polyline(coords,{color:'#dc2626',weight:5,opacity:.9})
-        .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}<span class="pop-tag">⛔ Trafiğe Kapalı</span>`).addTo(roadLayer));}
-    const pc=pm.querySelector('Point coordinates');
-    if(pc){const[ln,la]=pc.textContent.trim().split(',').map(Number);closedSegments.push({name,coords:[[la,ln]]});
-      all.push(L.circleMarker([la,ln],{radius:7,fillColor:'#dc2626',color:'#fff',weight:2,fillOpacity:.9})
-        .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}`).addTo(roadLayer));}
-    const poly=pm.querySelector('Polygon outerBoundaryIs LinearRing coordinates');
-    if(poly){const coords=parseCoords(poly.textContent);closedSegments.push({name,coords});
-      all.push(L.polygon(coords,{color:'#dc2626',fillColor:'#dc2626',fillOpacity:.1,weight:2})
-        .bindPopup(`<div class="pop-title">${name}</div>`).addTo(roadLayer));}
-  });
-  if(!all.length)return false;
-  try{map.fitBounds(L.featureGroup(all).getBounds(),{padding:[40,40]});}catch(e){}
-  status.style.display='none';
-  return true;
+function route(){
+  const v=document.getElementById('dest').value.trim();
+  if(!v){document.getElementById('dest').focus();return;}
+  openMaps(v.includes('Ankara')?v:v+', Ankara');
 }
-loadKML();
-
-// ═══ ADRES ARAMA — ÖNERİLİ ═══════════════════════════════════════════════════
-const input=document.getElementById('addr-input');
-const sugBox=document.getElementById('suggest');
-let debounce,activeIdx=-1,suggestions=[];
-
-input.addEventListener('input',()=>{
-  const q=input.value.trim();
-  document.getElementById('result-box').style.display='none';
-  clearTimeout(debounce);
-  if(q.length<2){sugBox.style.display='none';return;}
-  sugBox.innerHTML='<div class="sug-loading">Aranıyor…</div>';sugBox.style.display='block';
-  debounce=setTimeout(()=>fetchSuggestions(q),300);
-});
-
-async function fetchSuggestions(q){
-  try{
-    const vb='32.5,40.1,33.0,39.7';
-    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&countrycodes=tr&viewbox=${vb}&bounded=1&accept-language=tr`;
-    suggestions=await(await fetch(url)).json();
-    renderSuggestions();
-  }catch(e){sugBox.innerHTML='<div class="sug-loading">Arama yapılamadı</div>';}
+function quick(dest){openMaps(dest);}
+function quickCurrent(){
+  // Sadece haritayı konuma ortalamak yerine doğrudan Maps'i konumla aç
+  const v=document.getElementById('dest').value.trim();
+  if(v){route();return;}
+  // hedef yoksa kullanıcıya hedef sor
+  document.getElementById('dest').focus();
+  document.getElementById('dest').placeholder='Önce hedef yazın, sonra Yol Tarifi';
 }
-function renderSuggestions(){
-  activeIdx=-1;
-  if(!suggestions.length){sugBox.innerHTML='<div class="sug-loading">Sonuç bulunamadı</div>';return;}
-  sugBox.innerHTML=suggestions.map((s,i)=>{const p=s.display_name.split(',');
-    return `<div class="sug-item" data-i="${i}"><div class="main">${p[0].trim()}</div><div class="sub">${p.slice(1,4).join(',').trim()}</div></div>`;}).join('');
-  sugBox.querySelectorAll('.sug-item').forEach(el=>el.addEventListener('click',()=>selectSuggestion(+el.dataset.i)));
-}
-input.addEventListener('keydown',e=>{
-  const items=sugBox.querySelectorAll('.sug-item');if(!items.length)return;
-  if(e.key==='ArrowDown'){e.preventDefault();activeIdx=Math.min(activeIdx+1,items.length-1);upAct(items);}
-  else if(e.key==='ArrowUp'){e.preventDefault();activeIdx=Math.max(activeIdx-1,0);upAct(items);}
-  else if(e.key==='Enter'){e.preventDefault();selectSuggestion(activeIdx>=0?activeIdx:0);}
-  else if(e.key==='Escape')sugBox.style.display='none';
-});
-function upAct(items){items.forEach((el,i)=>el.classList.toggle('active',i===activeIdx));if(items[activeIdx])items[activeIdx].scrollIntoView({block:'nearest'});}
-document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap'))sugBox.style.display='none';});
-
-function placeMarker(lat,lng){
-  if(window._am)window._am.remove();
-  const pin=L.divIcon({className:'',html:`<div style="width:22px;height:22px;background:#2563eb;border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>`,iconSize:[22,22],iconAnchor:[11,22]});
-  window._am=L.marker([lat,lng],{icon:pin}).addTo(map);
-}
-
-function selectSuggestion(i){
-  const s=suggestions[i];if(!s)return;
-  const label=s.display_name.split(',')[0].trim();
-  input.value=label;sugBox.style.display='none';
-  const lat=+s.lat,lng=+s.lon;
-  placeMarker(lat,lng);
-  map.setView([lat,lng],15);
-  checkProximity(lat,lng,label);
-}
-
-// ═══ KAPALI BÖLGE KONTROLÜ + GOOGLE MAPS YÖNLENDİRME ════════════════════════
-function dist(lat1,lng1,lat2,lng2){
-  const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-  return 2*R*Math.asin(Math.sqrt(a));
-}
-function pointToSeg(plat,plng,alat,alng,blat,blng){
-  const k=Math.cos(plat*Math.PI/180);
-  const px=plng*k,py=plat,ax=alng*k,ay=alat,bx=blng*k,by=blat;
-  const dx=bx-ax,dy=by-ay,len2=dx*dx+dy*dy;
-  let t=len2===0?0:((px-ax)*dx+(py-ay)*dy)/len2;t=Math.max(0,Math.min(1,t));
-  const cx=ax+t*dx,cy=ay+t*dy;
-  return Math.sqrt((px-cx)**2+(py-cy)**2)*111000;
-}
-
-function checkProximity(lat,lng,label){
-  const box=document.getElementById('result-box');
-  box.style.display='block';
-  let min=Infinity,closest=null;
-  closedSegments.forEach(seg=>{
-    if(seg.coords.length===1){const d=dist(lat,lng,seg.coords[0][0],seg.coords[0][1]);if(d<min){min=d;closest=seg;}}
-    else for(let j=0;j<seg.coords.length-1;j++){
-      const d=pointToSeg(lat,lng,seg.coords[j][0],seg.coords[j][1],seg.coords[j+1][0],seg.coords[j+1][1]);
-      if(d<min){min=d;closest=seg;}
-    }
-  });
-
-  const gmaps=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-  const gBtn=`<a class="gmaps-btn" href="${gmaps}" target="_blank" rel="noopener">🧭 Google Maps ile yol tarifi al</a><div class="meta">Google güncel yol kapatmalarına göre rota çizer.</div>`;
-
-  if(min===Infinity){
-    box.className='result-warn';
-    box.innerHTML=`📍 <strong>${label}</strong> işaretlendi.<div class="meta">Kapalı yol verisi henüz yüklenmedi, lütfen bekleyin.</div>${gBtn}`;
-  }else if(min<250){
-    box.className='result-closed';
-    box.innerHTML=`⛔ <strong>${label}</strong> kapalı bölgede veya çok yakınında!<div class="meta">En yakın kapalı yol: ${closest.name} · ${Math.round(min)} m. Araçla giriş yapılamayabilir, toplu taşımayı değerlendirin.</div>${gBtn}`;
-  }else if(min<700){
-    box.className='result-warn';
-    box.innerHTML=`⚠️ <strong>${label}</strong> kapalı yola yakın.<div class="meta">${closest.name} · ${Math.round(min)} m uzakta. Çevredeki kapatmalara dikkat edin.</div>${gBtn}`;
-  }else{
-    box.className='result-safe';
-    box.innerHTML=`✅ <strong>${label}</strong> kapalı bölge dışında görünüyor.<div class="meta">En yakın kapalı yol ${(min/1000).toFixed(1)} km uzakta.</div>${gBtn}`;
-  }
-}
+document.getElementById('dest').addEventListener('keydown',e=>{if(e.key==='Enter')route();});
 </script>
 </body>
 </html>
