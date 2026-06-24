@@ -13,8 +13,8 @@
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
+      background: #f8f9fa;
+      color: #1a1a2e;
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -76,7 +76,7 @@
       align-items: center;
       gap: 0.35rem;
       font-size: 0.72rem;
-      color: #94a3b8;
+      color: #cbd5e1;
     }
 
     .legend-line {
@@ -94,7 +94,7 @@
 
     #map {
       flex: 1;
-      background: #1a1f2e;
+      background: #e8eaf0;
     }
 
     #status {
@@ -102,27 +102,28 @@
       bottom: 1.5rem;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15,17,23,0.92);
-      border: 1px solid #1e2535;
-      color: #94a3b8;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #e2e8f0;
+      color: #64748b;
       font-size: 0.75rem;
       padding: 0.45rem 1rem;
       border-radius: 20px;
       z-index: 999;
       display: none;
       backdrop-filter: blur(6px);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
 
     .leaflet-popup-content-wrapper {
-      background: #1e2535;
-      color: #e2e8f0;
-      border: 1px solid #2d3748;
+      background: #ffffff;
+      color: #1a1a2e;
+      border: 1px solid #e2e8f0;
       border-radius: 10px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     }
 
     .leaflet-popup-tip {
-      background: #1e2535;
+      background: #ffffff;
     }
 
     .leaflet-popup-content {
@@ -134,12 +135,12 @@
     .popup-title {
       font-weight: 600;
       font-size: 0.88rem;
-      color: #f1f5f9;
+      color: #1a1a2e;
       margin-bottom: 4px;
     }
 
     .popup-desc {
-      color: #94a3b8;
+      color: #64748b;
       font-size: 0.78rem;
     }
 
@@ -200,8 +201,8 @@ const map = L.map('map', {
   attributionControl: true
 });
 
-// Dark tile layer (CartoDB Dark Matter)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+// Light tile layer (CartoDB Positron)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://carto.com/">CARTO</a> | &copy; <a href="https://openstreetmap.org">OpenStreetMap</a>',
   subdomains: 'abcd',
   maxZoom: 19
