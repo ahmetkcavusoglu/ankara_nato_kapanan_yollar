@@ -130,22 +130,26 @@ async function loadKML(){
   status.textContent='Kapalı yol verisi yüklenemedi';setTimeout(()=>status.style.display='none',2500);
 }
 
-// Bir çizginin etrafına tampon poligon (yaklaşık, derece cinsinden)
+// Bir çizginin her segmenti için dar, hizalı tampon poligon üret
 function bufferLine(coordsLatLng,meters){
-  // her segment için dikdörtgen tampon üret, hepsini ayrı poligon olarak döndür
   const polys=[];
-  const mDeg=meters/111000; // ~derece
+  const latRef=coordsLatLng[0][0]*Math.PI/180;
+  const mLat=meters/111000;                          // enlemde metre→derece
+  const mLng=meters/(111000*Math.cos(latRef));       // boylamda metre→derece (enlem düzeltmeli)
   for(let i=0;i<coordsLatLng.length-1;i++){
     const [la1,ln1]=coordsLatLng[i],[la2,ln2]=coordsLatLng[i+1];
-    const dx=ln2-ln1,dy=la2-la1;
-    const len=Math.sqrt(dx*dx+dy*dy)||1;
-    // dik normal vektör
-    const nx=-dy/len*mDeg, ny=dx/len*mDeg;
-    // ORS poligonu [lng,lat] ister, halka kapalı olmalı
+    const dLa=la2-la1,dLn=ln2-ln1;
+    const len=Math.sqrt(dLa*dLa+dLn*dLn)||1;
+    // segmente dik birim normal (derece-ölçekli)
+    const nLa=(-dLn/len)*mLat, nLn=(dLa/len)*mLng;
+    // segmenti uçlardan biraz uzat ki kavşaklarda boşluk kalmasın ama taşma olmasın
+    const eLa=(dLa/len)*mLat*0.5, eLn=(dLn/len)*mLng*0.5;
     const ring=[
-      [ln1+nx,la1+ny],[ln2+nx,la2+ny],
-      [ln2-nx,la2-ny],[ln1-nx,la1-ny],
-      [ln1+nx,la1+ny]
+      [ln1-eLn+nLn,la1-eLa+nLa],
+      [ln2+eLn+nLn,la2+eLa+nLa],
+      [ln2+eLn-nLn,la2+eLa-nLa],
+      [ln1-eLn-nLn,la1-eLa-nLa],
+      [ln1-eLn+nLn,la1-eLa+nLa]
     ];
     polys.push(ring);
   }
@@ -164,7 +168,7 @@ function renderKML(kml){
     const lc=pm.querySelector('LineString coordinates');
     if(lc){const coords=parseCoordsLatLng(lc.textContent);
       closedLines.push(coords);
-      bufferLine(coords,70).forEach(p=>avoidPolygons.push(p));
+      bufferLine(coords,22).forEach(p=>avoidPolygons.push(p));
       all.push(L.polyline(coords,{pane:'closedPane',color:'#dc2626',weight:5,opacity:.9})
         .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}<span class="pop-tag">⛔ Trafiğe Kapalı</span>`).addTo(roadLayer));}
     const poly=pm.querySelector('Polygon outerBoundaryIs LinearRing coordinates');
