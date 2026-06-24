@@ -160,14 +160,23 @@ function renderSuggestions(){
   });
 }
 
+function placeMarker(lat,lng){
+  if(window._am)window._am.remove();
+  const pin=L.divIcon({
+    className:'',
+    html:`<div style="width:22px;height:22px;background:#2563eb;border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>`,
+    iconSize:[22,22],iconAnchor:[11,22]
+  });
+  window._am=L.marker([lat,lng],{icon:pin}).addTo(map);
+}
+
 function selectSuggestion(i){
   const s=suggestions[i];
   if(!s)return;
   input.value=s.display_name.split(',')[0].trim();
   sugBox.style.display='none';
   const lat=+s.lat,lng=+s.lon;
-  if(window._am)window._am.remove();
-  window._am=L.marker([lat,lng]).addTo(map);
+  placeMarker(lat,lng);
   map.setView([lat,lng],15);
   checkProximity(lat,lng,s.display_name);
 }
