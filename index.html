@@ -304,10 +304,8 @@ async function findRoute(){
     try{map.fitBounds(L.polyline(coords).getBounds(),{padding:[50,50]});}catch(e){}
 
     const sum=feat.properties.summary;
-    const km=(sum.distance/1000).toFixed(1);
-    const min=Math.round(sum.duration/60);
     box.className='result-safe';
-    box.innerHTML=`✅ Kapalı yollardan kaçınan rota çizildi.<div class="meta">${km} km · ~${min} dk · ${a.label} → ${b.label}</div>`;
+    box.innerHTML=`✅ Kapalı yollardan kaçınan rota çizildi.`;
   }catch(e){
     box.className='result-warn';
     box.innerHTML='⚠️ Rota servisine ulaşılamadı. Lütfen tekrar deneyin.<div class="meta">'+e.message+'</div>';
