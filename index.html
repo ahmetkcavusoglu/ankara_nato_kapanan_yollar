@@ -106,36 +106,65 @@ let closedSegments=[]; // her biri [[lat,lng],...]
 
 // ═══ KML CANLI VERİ ══════════════════════════════════════════════════════════
 const KML_URL='https://www.google.com/maps/d/u/0/kml?mid=1N4D1di4x0Qm2eWkeKTHQMWso3Rvn4VY&forcekml=1';
-const PROXY='https://api.allorigins.win/raw?url=';
+// Birden fazla CORS proxy — biri çökerse diğerine geç
+const PROXIES=[
+  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+  u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
+  u=>'https://thingproxy.freeboard.io/fetch/'+u,
+  u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u)
+];
 function parseCoords(str){return str.trim().split(/\s+/).map(c=>{const[ln,la]=c.split(',').map(Number);return[la,ln];});}
 
-fetch(PROXY+encodeURIComponent(KML_URL))
-  .then(r=>{if(!r.ok)throw new Error();return r.text();})
-  .then(kml=>{
-    const doc=new DOMParser().parseFromString(kml,'text/xml');
-    const pms=doc.querySelectorAll('Placemark');
-    if(!pms.length)throw new Error('boş');
-    const all=[];
-    pms.forEach(pm=>{
-      const name=pm.querySelector('name')?.textContent||'Kapalı Bölge';
-      const desc=pm.querySelector('description')?.textContent||'';
-      const lc=pm.querySelector('LineString coordinates');
-      if(lc){const coords=parseCoords(lc.textContent);closedSegments.push(coords);
-        all.push(L.polyline(coords,{color:'#dc2626',weight:5,opacity:.85,dashArray:'8 4'})
-          .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}<span class="pop-tag">⛔ Trafiğe Kapalı</span>`).addTo(roadLayer));}
-      const pc=pm.querySelector('Point coordinates');
-      if(pc){const[ln,la]=pc.textContent.trim().split(',').map(Number);closedSegments.push([[la,ln]]);
-        all.push(L.circleMarker([la,ln],{radius:7,fillColor:'#dc2626',color:'#fff',weight:2,fillOpacity:.9})
-          .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}`).addTo(roadLayer));}
-      const poly=pm.querySelector('Polygon outerBoundaryIs LinearRing coordinates');
-      if(poly){const coords=parseCoords(poly.textContent);closedSegments.push(coords);
-        all.push(L.polygon(coords,{color:'#dc2626',fillColor:'#dc2626',fillOpacity:.1,weight:2})
-          .bindPopup(`<div class="pop-title">${name}</div>`).addTo(roadLayer));}
-    });
-    if(all.length){try{map.fitBounds(L.featureGroup(all).getBounds(),{padding:[40,40]});}catch(e){}}
+async function loadKML(){
+  for(let i=0;i<PROXIES.length;i++){
+    try{
+      status.textContent=`Kapalı yol verisi yükleniyor… (${i+1}/${PROXIES.length})`;
+      const r=await fetch(PROXIES[i](KML_URL),{signal:AbortSignal.timeout(8000)});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const kml=await r.text();
+      if(!kml||kml.length<50||!kml.includes('Placemark'))throw new Error('geçersiz veri');
+      if(renderKML(kml))return;
+      throw new Error('placemark yok');
+    }catch(e){
+      console.warn('Proxy '+(i+1)+' başarısız:',e.message);
+    }
+  }
+  status.textContent='Canlı veri alınamadı — Google harita gösteriliyor…';
+  setTimeout(()=>{
+    document.getElementById('map').innerHTML=`<iframe src="https://www.google.com/maps/d/u/0/embed?mid=1N4D1di4x0Qm2eWkeKTHQMWso3Rvn4VY&ll=39.932090376723096,32.62557501490355&z=13" style="width:100%;height:100%;border:none"></iframe>`;
     status.style.display='none';
-  })
-  .catch(()=>{status.textContent='Kapalı yol verisi yüklenemedi';setTimeout(()=>status.style.display='none',2000);});
+  },1500);
+}
+
+function renderKML(kml){
+  const doc=new DOMParser().parseFromString(kml,'text/xml');
+  const pms=doc.querySelectorAll('Placemark');
+  if(!pms.length)return false;
+  roadLayer.clearLayers();closedSegments=[];
+  const all=[];
+  pms.forEach(pm=>{
+    const name=pm.querySelector('name')?.textContent||'Kapalı Bölge';
+    const desc=pm.querySelector('description')?.textContent||'';
+    const lc=pm.querySelector('LineString coordinates');
+    if(lc){const coords=parseCoords(lc.textContent);closedSegments.push(coords);
+      all.push(L.polyline(coords,{color:'#dc2626',weight:5,opacity:.85,dashArray:'8 4'})
+        .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}<span class="pop-tag">⛔ Trafiğe Kapalı</span>`).addTo(roadLayer));}
+    const pc=pm.querySelector('Point coordinates');
+    if(pc){const[ln,la]=pc.textContent.trim().split(',').map(Number);closedSegments.push([[la,ln]]);
+      all.push(L.circleMarker([la,ln],{radius:7,fillColor:'#dc2626',color:'#fff',weight:2,fillOpacity:.9})
+        .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}`).addTo(roadLayer));}
+    const poly=pm.querySelector('Polygon outerBoundaryIs LinearRing coordinates');
+    if(poly){const coords=parseCoords(poly.textContent);closedSegments.push(coords);
+      all.push(L.polygon(coords,{color:'#dc2626',fillColor:'#dc2626',fillOpacity:.1,weight:2})
+        .bindPopup(`<div class="pop-title">${name}</div>`).addTo(roadLayer));}
+  });
+  if(!all.length)return false;
+  try{map.fitBounds(L.featureGroup(all).getBounds(),{padding:[40,40]});}catch(e){}
+  status.style.display='none';
+  return true;
+}
+
+loadKML();
 
 // ═══ ADRES AUTOCOMPLETE (iki alan) ═══════════════════════════════════════════
 const endpoints={a:{lat:null,lng:null,label:null},b:{lat:null,lng:null,label:null}};
@@ -216,25 +245,66 @@ function swap(){
 function updateRouteBtn(){document.getElementById('route-btn').disabled=!(endpoints.a.lat&&endpoints.b.lat);}
 
 // ═══ ROTA — KAPALI YOLDAN KAÇINMA ════════════════════════════════════════════
-// Bir rota noktası herhangi bir kapalı segmente bu mesafeden yakınsa "kapalıya değiyor" sayılır
-const HIT_METERS=60;
+// Rota, kapalı bir yol parçasına bu mesafeden yakın geçerse "değiyor" sayılır
+const HIT_METERS=90;
 
 function dist(lat1,lng1,lat2,lng2){
   const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
   const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
   return 2*R*Math.asin(Math.sqrt(a));
 }
-// Rota geometrisi (lng,lat dizisi) kapalı segmentlere değiyor mu? Kaç ihlal?
+
+// Bir noktanın (plat,plng) bir doğru parçasına (a→b) en kısa mesafesi (metre)
+function pointToSeg(plat,plng,alat,alng,blat,blng){
+  // Küçük ölçekte düzlem yaklaşımı; enlemde 1°≈111km, boylamda cos(lat) ile düzelt
+  const k=Math.cos(plat*Math.PI/180);
+  const px=plng*k,py=plat, ax=alng*k,ay=alat, bx=blng*k,by=blat;
+  const dx=bx-ax,dy=by-ay;
+  const len2=dx*dx+dy*dy;
+  let t=len2===0?0:((px-ax)*dx+(py-ay)*dy)/len2;
+  t=Math.max(0,Math.min(1,t));
+  const cx=ax+t*dx,cy=ay+t*dy;
+  const ddeg=Math.sqrt((px-cx)**2+(py-cy)**2);
+  return ddeg*111000; // dereceyi metreye çevir
+}
+
+// Rotanın her noktası, her kapalı segmentin her doğru parçasına yakın mı?
 function countHits(geometry){
-  let hits=0;const seen=new Set();
+  const hitSet=new Set();
   for(const [lng,lat] of geometry){
     for(let si=0;si<closedSegments.length;si++){
-      for(const [clat,clng] of closedSegments[si]){
-        if(dist(lat,lng,clat,clng)<HIT_METERS){if(!seen.has(si)){seen.add(si);hits++;}break;}
+      const seg=closedSegments[si];
+      let near=false;
+      if(seg.length===1){
+        if(dist(lat,lng,seg[0][0],seg[0][1])<HIT_METERS)near=true;
+      }else{
+        for(let j=0;j<seg.length-1;j++){
+          if(pointToSeg(lat,lng,seg[j][0],seg[j][1],seg[j+1][0],seg[j+1][1])<HIT_METERS){near=true;break;}
+        }
+      }
+      if(near)hitSet.add(si);
+    }
+  }
+  return hitSet.size;
+}
+
+// Rota noktaları seyrekse, kapalı yolu "atlamamak" için araya nokta ekle (~25m aralık)
+function densify(coords){
+  const out=[];
+  for(let i=0;i<coords.length-1;i++){
+    const [lng1,lat1]=coords[i],[lng2,lat2]=coords[i+1];
+    out.push([lng1,lat1]);
+    const d=dist(lat1,lng1,lat2,lng2);
+    if(d>25){
+      const steps=Math.floor(d/25);
+      for(let s=1;s<steps;s++){
+        const t=s/steps;
+        out.push([lng1+(lng2-lng1)*t,lat1+(lat2-lat1)*t]);
       }
     }
   }
-  return hits;
+  out.push(coords[coords.length-1]);
+  return out;
 }
 
 async function findRoute(){
@@ -250,26 +320,25 @@ async function findRoute(){
     const data=await res.json();
     if(!data.routes||!data.routes.length){box.className='result-warn';box.innerHTML='⚠️ Rota bulunamadı.';return;}
 
-    // Her rotayı kapalı yola değme sayısına göre değerlendir
-    const evaluated=data.routes.map(r=>({route:r,hits:countHits(r.geometry.coordinates)}));
+    // Her rotayı kapalı yola değme sayısına göre değerlendir (geometriyi sıklaştırarak)
+    const evaluated=data.routes.map(r=>({route:r,hits:countHits(densify(r.geometry.coordinates))}));
     evaluated.sort((x,y)=>x.hits-y.hits||x.route.distance-y.route.distance);
     const best=evaluated[0];
     const g=best.route.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
     const km=(best.route.distance/1000).toFixed(1);
     const min=Math.round(best.route.duration/60);
 
-    // Diğer (kapalı) alternatifleri soluk göster
+    // Elenen (daha çok kapalıya değen) alternatifleri soluk gri göster
     evaluated.slice(1).forEach(ev=>{
       if(ev.hits>best.hits){
         const gg=ev.route.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
-        L.polyline(gg,{color:'#9ca3af',weight:3,opacity:.35,dashArray:'4 6'}).addTo(routeLayer);
+        L.polyline(gg,{color:'#9ca3af',weight:3,opacity:.3,dashArray:'4 6'}).addTo(routeLayer);
       }
     });
 
-    // En iyi rotayı çiz
-    const color=best.hits===0?'#16a34a':'#ea580c';
+    // En iyi rota — temizse MAVİ, kapalıya değiyorsa MAVİ ama uyarı verilir
+    const color=best.hits===0?'#2563eb':'#1d4ed8';
     L.polyline(g,{color,weight:6,opacity:.9}).addTo(routeLayer);
-    // Başlangıç/varış zaten işaretli; rotayı görünür yap
     try{map.fitBounds(L.polyline(g).getBounds(),{padding:[50,50]});}catch(e){}
 
     if(best.hits===0){
@@ -277,7 +346,7 @@ async function findRoute(){
       box.innerHTML=`✅ Kapalı yola değmeyen rota bulundu.<div class="meta">${km} km · ~${min} dk · ${a.label} → ${b.label}</div>`;
     }else{
       box.className='result-closed';
-      box.innerHTML=`⚠️ Tamamen temiz rota bulunamadı. En az kapalı yoldan geçen rota gösteriliyor (${best.hits} kapalı kesişim).<div class="meta">${km} km · ~${min} dk · Turuncu = dikkat. Yola çıkmadan kontrol edin.</div>`;
+      box.innerHTML=`⛔ Bu iki nokta arasında kapalı yola değmeyen rota bulunamadı. Gösterilen rota ${best.hits} kapalı kesimden geçiyor — bu yoldan geçilemez.<div class="meta">Alternatif: toplu taşıma (metro) kullanın ya da varış/çıkış noktasını kapalı bölge dışına alın.</div>`;
     }
   }catch(e){
     box.className='result-warn';box.innerHTML='⚠️ Rota servisine ulaşılamadı. Lütfen tekrar deneyin.';
