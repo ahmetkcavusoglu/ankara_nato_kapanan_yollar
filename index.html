@@ -98,6 +98,10 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
 
 const roadLayer=L.layerGroup().addTo(map);
 const routeLayer=L.layerGroup().addTo(map);
+
+// Çizim sırası: rota altta, kapalı yollar her zaman ÜSTTE (örtülmesin)
+map.createPane('routePane');map.getPane('routePane').style.zIndex=400;
+map.createPane('closedPane');map.getPane('closedPane').style.zIndex=450;
 const status=document.getElementById('status');
 status.style.display='block';
 
@@ -147,15 +151,15 @@ function renderKML(kml){
     const desc=pm.querySelector('description')?.textContent||'';
     const lc=pm.querySelector('LineString coordinates');
     if(lc){const coords=parseCoords(lc.textContent);closedSegments.push(coords);
-      all.push(L.polyline(coords,{color:'#dc2626',weight:5,opacity:.85,dashArray:'8 4'})
+      all.push(L.polyline(coords,{pane:'closedPane',color:'#dc2626',weight:5,opacity:.9})
         .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}<span class="pop-tag">⛔ Trafiğe Kapalı</span>`).addTo(roadLayer));}
     const pc=pm.querySelector('Point coordinates');
     if(pc){const[ln,la]=pc.textContent.trim().split(',').map(Number);closedSegments.push([[la,ln]]);
-      all.push(L.circleMarker([la,ln],{radius:7,fillColor:'#dc2626',color:'#fff',weight:2,fillOpacity:.9})
+      all.push(L.circleMarker([la,ln],{pane:'closedPane',radius:7,fillColor:'#dc2626',color:'#fff',weight:2,fillOpacity:.9})
         .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}`).addTo(roadLayer));}
     const poly=pm.querySelector('Polygon outerBoundaryIs LinearRing coordinates');
     if(poly){const coords=parseCoords(poly.textContent);closedSegments.push(coords);
-      all.push(L.polygon(coords,{color:'#dc2626',fillColor:'#dc2626',fillOpacity:.1,weight:2})
+      all.push(L.polygon(coords,{pane:'closedPane',color:'#dc2626',fillColor:'#dc2626',fillOpacity:.1,weight:2})
         .bindPopup(`<div class="pop-title">${name}</div>`).addTo(roadLayer));}
   });
   if(!all.length)return false;
@@ -332,13 +336,13 @@ async function findRoute(){
     evaluated.slice(1).forEach(ev=>{
       if(ev.hits>best.hits){
         const gg=ev.route.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
-        L.polyline(gg,{color:'#9ca3af',weight:3,opacity:.3,dashArray:'4 6'}).addTo(routeLayer);
+        L.polyline(gg,{pane:'routePane',color:'#9ca3af',weight:3,opacity:.3,dashArray:'4 6'}).addTo(routeLayer);
       }
     });
 
-    // En iyi rota — temizse MAVİ, kapalıya değiyorsa MAVİ ama uyarı verilir
+    // En iyi rota — mavi
     const color=best.hits===0?'#2563eb':'#1d4ed8';
-    L.polyline(g,{color,weight:6,opacity:.9}).addTo(routeLayer);
+    L.polyline(g,{pane:'routePane',color,weight:6,opacity:.85}).addTo(routeLayer);
     try{map.fitBounds(L.polyline(g).getBounds(),{padding:[50,50]});}catch(e){}
 
     if(best.hits===0){
