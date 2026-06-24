@@ -103,48 +103,35 @@ map.createPane('closedPane');map.getPane('closedPane').style.zIndex=450;
 const status=document.getElementById('status');
 
 // ═══ RESMİ KAPALI YOLLAR — Valilik belgesi ═══════════════════════════════════
-// [lat,lng] noktalarıyla gerçek güzergaha yakın çizimler. region: bölge, type: tam/kısmi
-const CLOSED=[
-  // ── Söğütözü / Yenimahalle — Külliye güvenlik çemberi ──
-  {name:"Cumhurbaşkanlığı Caddesi",region:"Söğütözü",path:[[39.9268,32.7945],[39.9258,32.7990],[39.9250,32.8030]]},
-  {name:"Beştepe Caddesi",region:"Söğütözü",path:[[39.9295,32.7975],[39.9268,32.7990],[39.9242,32.8000]]},
-  {name:"Söğütözü Caddesi",region:"Söğütözü",path:[[39.9165,32.7930],[39.9205,32.7965],[39.9245,32.8005]]},
-  {name:"Alparslan Türkeş Caddesi",region:"Söğütözü",path:[[39.9120,32.7860],[39.9175,32.7920],[39.9230,32.7990]]},
-  {name:"Yaşam Caddesi",region:"Söğütözü",path:[[39.9150,32.8005],[39.9195,32.8015],[39.9235,32.8020]]},
-
-  // ── Ana bulvarlar (Külliye'ye protokol erişimi) ──
-  {name:"1071 Malazgirt Bulvarı",region:"Yenimahalle",path:[[39.9050,32.7780],[39.9120,32.7860],[39.9190,32.7950]]},
-  {name:"Cumhurbaşkanlığı Bulvarı",region:"Söğütözü",path:[[39.9210,32.7880],[39.9240,32.7940],[39.9255,32.7990]]},
-  {name:"Sakıp Sabancı Bulvarı",region:"Söğütözü",path:[[39.9100,32.8060],[39.9155,32.8035],[39.9210,32.8015]]},
-  {name:"İhsan Doğramacı Bulvarı",region:"Bilkent",path:[[39.8870,32.7470],[39.8810,32.7560],[39.8760,32.7650]]},
-  {name:"Mevlana Bulvarı (Konya Yolu)",region:"Balgat",path:[[39.8950,32.8200],[39.9000,32.8120],[39.9060,32.8040]]},
-  {name:"Atatürk Bulvarı (Kızılay–Çankaya)",region:"Çankaya",path:[[39.9205,32.8540],[39.9120,32.8590],[39.9030,32.8635]]},
-  {name:"İnönü Bulvarı",region:"Çankaya",path:[[39.9150,32.8480],[39.9100,32.8540],[39.9050,32.8595]]},
-  {name:"FSM (Fatih Sultan Mehmet) Bulvarı",region:"Çankaya",path:[[39.8850,32.8330],[39.8780,32.8400],[39.8710,32.8470]]},
-  {name:"Anadolu Bulvarı",region:"Yenimahalle",path:[[39.9450,32.7550],[39.9520,32.7400],[39.9590,32.7250]]},
-  {name:"Dumlupınar Bulvarı",region:"Çankaya/ODTÜ",path:[[39.8920,32.7780],[39.8870,32.7900],[39.8820,32.8020]]},
-  {name:"Şehit Ömer Halisdemir Bulvarı",region:"Yenimahalle",path:[[39.9350,32.7700],[39.9300,32.7820],[39.9250,32.7940]]},
-
-  // ── Çankaya — protokol & otel bölgesi ──
-  {name:"Cinnah Caddesi",region:"Çankaya",path:[[39.9010,32.8625],[39.8950,32.8645],[39.8890,32.8665]]},
-  {name:"Tahran Caddesi",region:"Çankaya",path:[[39.8980,32.8640],[39.8950,32.8680],[39.8925,32.8715]]},
-  {name:"İran Caddesi",region:"Çankaya",path:[[39.9020,32.8595],[39.8985,32.8625],[39.8955,32.8655]]},
-  {name:"Arjantin Caddesi",region:"Çankaya",path:[[39.8965,32.8665],[39.8942,32.8700],[39.8922,32.8735]]},
-  {name:"Simon Bolivar Caddesi",region:"Çankaya",path:[[39.8992,32.8682],[39.8968,32.8712]]},
-  {name:"Rabindranath Tagore Caddesi",region:"Çankaya",path:[[39.8948,32.8638],[39.8926,32.8668]]},
-  {name:"John F. Kennedy Caddesi",region:"Çankaya",path:[[39.8922,32.8588],[39.8895,32.8620],[39.8868,32.8652]]},
-  {name:"Kişinev Caddesi",region:"Çankaya",path:[[39.8938,32.8700],[39.8916,32.8728]]},
-  {name:"Jose Marti Caddesi",region:"Çankaya",path:[[39.8958,32.8716],[39.8936,32.8744]]},
-  {name:"Polonya Caddesi",region:"Çankaya",path:[[39.8982,32.8722],[39.8960,32.8748]]},
-
-  // ── Diğer önemli arterler ──
-  {name:"Türk Kızılayı Caddesi",region:"Çukurambar",path:[[39.9055,32.7990],[39.9030,32.8045],[39.9008,32.8095]]},
-  {name:"Ş.Ö. Şenay Aybüke Yalçın Caddesi",region:"Çukurambar",path:[[39.9085,32.8075],[39.9060,32.8120],[39.9038,32.8160]]},
-  {name:"Nizami Gencevi Caddesi",region:"Çukurambar",path:[[39.9042,32.8088],[39.9020,32.8128],[39.9000,32.8165]]},
-  {name:"Muhsin Yazıcıoğlu Cad. (Çetin Emeç–İnönü)",region:"Balgat",path:[[39.9010,32.8045],[39.8965,32.8110],[39.8920,32.8170]]},
+// Cadde adları + arama bölgesi. Gerçek geometri OpenStreetMap (Overpass) API'den çekilir.
+const CLOSED_STREETS=[
+  {name:"Cumhurbaşkanlığı Caddesi",region:"Söğütözü",area:[39.915,32.785,39.935,32.815]},
+  {name:"Beştepe Caddesi",region:"Söğütözü",area:[39.918,32.785,39.938,32.810]},
+  {name:"Söğütözü Caddesi",region:"Söğütözü",area:[39.910,32.785,39.930,32.810]},
+  {name:"Alparslan Türkeş Caddesi",region:"Söğütözü",area:[39.905,32.780,39.930,32.805]},
+  {name:"Yaşam Caddesi",region:"Söğütözü",area:[39.910,32.795,39.928,32.812]},
+  {name:"1071 Malazgirt Bulvarı",region:"Yenimahalle",area:[39.895,32.760,39.925,32.800]},
+  {name:"Dumlupınar Bulvarı",region:"ODTÜ/Çankaya",area:[39.875,32.750,39.905,32.825]},
+  {name:"Anadolu Bulvarı",region:"Yenimahalle",area:[39.930,32.690,39.980,32.775]},
+  {name:"Mevlana Bulvarı",region:"Balgat",area:[39.875,32.795,39.918,32.865]},
+  {name:"Atatürk Bulvarı",region:"Çankaya",area:[39.890,32.848,39.928,32.872]},
+  {name:"İnönü Bulvarı",region:"Çankaya",area:[39.898,32.842,39.922,32.868]},
+  {name:"Fatih Sultan Mehmet Bulvarı",region:"Çankaya",area:[39.855,32.815,39.898,32.865]},
+  {name:"Cinnah Caddesi",region:"Çankaya",area:[39.878,32.853,39.912,32.877]},
+  {name:"Tahran Caddesi",region:"Çankaya",area:[39.883,32.853,39.907,32.882]},
+  {name:"İran Caddesi",region:"Çankaya",area:[39.886,32.848,39.910,32.874]},
+  {name:"Arjantin Caddesi",region:"Çankaya",area:[39.883,32.858,39.907,32.884]},
+  {name:"Simon Bolivar Caddesi",region:"Çankaya",area:[39.886,32.860,39.907,32.882]},
+  {name:"Rabindranath Tagore Caddesi",region:"Çankaya",area:[39.886,32.856,39.904,32.877]},
+  {name:"John F. Kennedy Caddesi",region:"Çankaya",area:[39.878,32.850,39.902,32.874]},
+  {name:"Kişinev Caddesi",region:"Çankaya",area:[39.886,32.860,39.904,32.882]},
+  {name:"Jose Marti Caddesi",region:"Çankaya",area:[39.886,32.860,39.904,32.884]},
+  {name:"Polonya Caddesi",region:"Çankaya",area:[39.888,32.860,39.907,32.884]},
+  {name:"Türk Kızılayı Caddesi",region:"Çukurambar",area:[39.893,32.788,39.917,32.822]},
+  {name:"Nizami Gencevi Caddesi",region:"Çukurambar",area:[39.893,32.798,39.914,32.827]},
+  {name:"Muhsin Yazıcıoğlu Caddesi",region:"Balgat",area:[39.883,32.793,39.912,32.827]},
 ];
 
-// Kırmızı alan çemberleri (görsel)
 const ZONES=[
   {name:"Cumhurbaşkanlığı Külliyesi – Kırmızı Alan",center:[39.9252,32.7997],radius:1800},
   {name:"Çankaya Otel Bölgesi – Kırmızı Alan",center:[39.8950,32.8680],radius:1100},
@@ -166,21 +153,45 @@ function bufferLine(path,meters){
   return polys;
 }
 
-function drawClosed(){
-  const all=[];
-  // Kırmızı alan çemberleri
+async function fetchStreetGeometry(street){
+  const [s,w,n,e]=street.area;
+  const q=`[out:json][timeout:25];way["highway"]["name"="${street.name}"](${s},${w},${n},${e});out geom;`;
+  const endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
+  for(const ep of endpoints){
+    try{
+      const r=await fetch(ep,{method:'POST',body:'data='+encodeURIComponent(q),signal:AbortSignal.timeout(15000)});
+      if(!r.ok)continue;
+      const d=await r.json();
+      if(!d.elements||!d.elements.length)return null;
+      const segments=[];
+      d.elements.forEach(el=>{if(el.geometry)segments.push(el.geometry.map(g=>[g.lat,g.lon]));});
+      return segments;
+    }catch(e){console.warn('Overpass',ep,e.message);}
+  }
+  return null;
+}
+
+async function drawClosed(){
   ZONES.forEach(z=>{
     L.circle(z.center,{pane:'closedPane',radius:z.radius,color:'#dc2626',fillColor:'#dc2626',fillOpacity:.05,weight:1.5,dashArray:'5 5'})
       .bindPopup(`<div class="pop-title">${z.name}</div><span class="pop-tag">🟥 İzinli araç dışında giriş yasak</span>`).addTo(roadLayer);
   });
-  // Kapalı caddeler
-  CLOSED.forEach(r=>{
-    bufferLine(r.path,24).forEach(p=>avoidPolygons.push(p));
-    const line=L.polyline(r.path,{pane:'closedPane',color:'#dc2626',weight:5,opacity:.9})
-      .bindPopup(`<div class="pop-title">${r.name}</div><div style="font-size:.74rem;color:#6b7280;margin:1px 0 2px">${r.region}</div><span class="pop-tag">⛔ Trafiğe Kapalı</span>`)
-      .addTo(roadLayer);
-    all.push(line);
-  });
+  const all=[];
+  let done=0;
+  await Promise.all(CLOSED_STREETS.map(async street=>{
+    const segs=await fetchStreetGeometry(street);
+    done++;
+    status.textContent=`Kapalı yollar çiziliyor… (${done}/${CLOSED_STREETS.length})`;
+    if(!segs||!segs.length)return;
+    segs.forEach(path=>{
+      if(path.length<2)return;
+      bufferLine(path,22).forEach(p=>avoidPolygons.push(p));
+      const line=L.polyline(path,{pane:'closedPane',color:'#dc2626',weight:5,opacity:.9})
+        .bindPopup(`<div class="pop-title">${street.name}</div><div style="font-size:.74rem;color:#6b7280;margin:1px 0 2px">${street.region}</div><span class="pop-tag">⛔ Trafiğe Kapalı</span>`)
+        .addTo(roadLayer);
+      all.push(line);
+    });
+  }));
   if(all.length){try{map.fitBounds(L.featureGroup(all).getBounds(),{padding:[40,40]});}catch(e){}}
   status.style.display='none';
 }
