@@ -85,13 +85,13 @@ header p{font-size:.6rem;color:#94a3b8;margin-top:1px}
 </div>
 
 <div id="map"></div>
-<div id="status">Harita verileri yükleniyor…</div>
-<div class="src">Kaynak: "Nato Zirvesi Kapalı Caddeler" canlı veri · Rota: OpenRouteService (kapalı caddeler engel olarak işlenir). Yola çıkmadan Valilik &amp; Emniyet duyurularını kontrol edin.</div>
+<div id="status">Kapalı yollar çiziliyor…</div>
+<div class="src">Kaynak: Ankara Valiliği "36. NATO Zirvesi Kullanılacak Güzergahlar" resmi belgesi (28 Haz–10 Tem 2026). Rota: OpenRouteService. Koordinatlar yaklaşıktır; anlık durum için Valilik &amp; Emniyet duyurularını izleyin.</div>
 
 <script>
 const ORS_KEY='eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImU0ZWMyZDI1ZmIxYjRiMDI4ODA2MDU3NTgwNmRkYmJkIiwiaCI6Im11cm11cjY0In0=';
 
-const map=L.map('map',{center:[39.9150,32.8100],zoom:12,zoomControl:true});
+const map=L.map('map',{center:[39.9100,32.8200],zoom:12,zoomControl:true});
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
   attribution:'&copy; CARTO &copy; OpenStreetMap',subdomains:'abcd',maxZoom:19}).addTo(map);
 
@@ -101,94 +101,90 @@ map.createPane('routePane');map.getPane('routePane').style.zIndex=400;
 map.createPane('closedPane');map.getPane('closedPane').style.zIndex=450;
 
 const status=document.getElementById('status');
-status.style.display='block';
-let closedLines=[];        // [[lng,lat],...] formatında (ORS için)
-let avoidPolygons=[];      // ORS avoid_polygons coordinates
 
-// ═══ KML CANLI VERİ ══════════════════════════════════════════════════════════
-const KML_URL='https://www.google.com/maps/d/u/0/kml?mid=1N4D1di4x0Qm2eWkeKTHQMWso3Rvn4VY&forcekml=1';
-const PROXIES=[
-  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-  u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
-  u=>'https://thingproxy.freeboard.io/fetch/'+u,
-  u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u)
+// ═══ RESMİ KAPALI YOLLAR — Valilik belgesi ═══════════════════════════════════
+// [lat,lng] noktalarıyla gerçek güzergaha yakın çizimler. region: bölge, type: tam/kısmi
+const CLOSED=[
+  // ── Söğütözü / Yenimahalle — Külliye güvenlik çemberi ──
+  {name:"Cumhurbaşkanlığı Caddesi",region:"Söğütözü",path:[[39.9268,32.7945],[39.9258,32.7990],[39.9250,32.8030]]},
+  {name:"Beştepe Caddesi",region:"Söğütözü",path:[[39.9295,32.7975],[39.9268,32.7990],[39.9242,32.8000]]},
+  {name:"Söğütözü Caddesi",region:"Söğütözü",path:[[39.9165,32.7930],[39.9205,32.7965],[39.9245,32.8005]]},
+  {name:"Alparslan Türkeş Caddesi",region:"Söğütözü",path:[[39.9120,32.7860],[39.9175,32.7920],[39.9230,32.7990]]},
+  {name:"Yaşam Caddesi",region:"Söğütözü",path:[[39.9150,32.8005],[39.9195,32.8015],[39.9235,32.8020]]},
+
+  // ── Ana bulvarlar (Külliye'ye protokol erişimi) ──
+  {name:"1071 Malazgirt Bulvarı",region:"Yenimahalle",path:[[39.9050,32.7780],[39.9120,32.7860],[39.9190,32.7950]]},
+  {name:"Cumhurbaşkanlığı Bulvarı",region:"Söğütözü",path:[[39.9210,32.7880],[39.9240,32.7940],[39.9255,32.7990]]},
+  {name:"Sakıp Sabancı Bulvarı",region:"Söğütözü",path:[[39.9100,32.8060],[39.9155,32.8035],[39.9210,32.8015]]},
+  {name:"İhsan Doğramacı Bulvarı",region:"Bilkent",path:[[39.8870,32.7470],[39.8810,32.7560],[39.8760,32.7650]]},
+  {name:"Mevlana Bulvarı (Konya Yolu)",region:"Balgat",path:[[39.8950,32.8200],[39.9000,32.8120],[39.9060,32.8040]]},
+  {name:"Atatürk Bulvarı (Kızılay–Çankaya)",region:"Çankaya",path:[[39.9205,32.8540],[39.9120,32.8590],[39.9030,32.8635]]},
+  {name:"İnönü Bulvarı",region:"Çankaya",path:[[39.9150,32.8480],[39.9100,32.8540],[39.9050,32.8595]]},
+  {name:"FSM (Fatih Sultan Mehmet) Bulvarı",region:"Çankaya",path:[[39.8850,32.8330],[39.8780,32.8400],[39.8710,32.8470]]},
+  {name:"Anadolu Bulvarı",region:"Yenimahalle",path:[[39.9450,32.7550],[39.9520,32.7400],[39.9590,32.7250]]},
+  {name:"Dumlupınar Bulvarı",region:"Çankaya/ODTÜ",path:[[39.8920,32.7780],[39.8870,32.7900],[39.8820,32.8020]]},
+  {name:"Şehit Ömer Halisdemir Bulvarı",region:"Yenimahalle",path:[[39.9350,32.7700],[39.9300,32.7820],[39.9250,32.7940]]},
+
+  // ── Çankaya — protokol & otel bölgesi ──
+  {name:"Cinnah Caddesi",region:"Çankaya",path:[[39.9010,32.8625],[39.8950,32.8645],[39.8890,32.8665]]},
+  {name:"Tahran Caddesi",region:"Çankaya",path:[[39.8980,32.8640],[39.8950,32.8680],[39.8925,32.8715]]},
+  {name:"İran Caddesi",region:"Çankaya",path:[[39.9020,32.8595],[39.8985,32.8625],[39.8955,32.8655]]},
+  {name:"Arjantin Caddesi",region:"Çankaya",path:[[39.8965,32.8665],[39.8942,32.8700],[39.8922,32.8735]]},
+  {name:"Simon Bolivar Caddesi",region:"Çankaya",path:[[39.8992,32.8682],[39.8968,32.8712]]},
+  {name:"Rabindranath Tagore Caddesi",region:"Çankaya",path:[[39.8948,32.8638],[39.8926,32.8668]]},
+  {name:"John F. Kennedy Caddesi",region:"Çankaya",path:[[39.8922,32.8588],[39.8895,32.8620],[39.8868,32.8652]]},
+  {name:"Kişinev Caddesi",region:"Çankaya",path:[[39.8938,32.8700],[39.8916,32.8728]]},
+  {name:"Jose Marti Caddesi",region:"Çankaya",path:[[39.8958,32.8716],[39.8936,32.8744]]},
+  {name:"Polonya Caddesi",region:"Çankaya",path:[[39.8982,32.8722],[39.8960,32.8748]]},
+
+  // ── Diğer önemli arterler ──
+  {name:"Türk Kızılayı Caddesi",region:"Çukurambar",path:[[39.9055,32.7990],[39.9030,32.8045],[39.9008,32.8095]]},
+  {name:"Ş.Ö. Şenay Aybüke Yalçın Caddesi",region:"Çukurambar",path:[[39.9085,32.8075],[39.9060,32.8120],[39.9038,32.8160]]},
+  {name:"Nizami Gencevi Caddesi",region:"Çukurambar",path:[[39.9042,32.8088],[39.9020,32.8128],[39.9000,32.8165]]},
+  {name:"Muhsin Yazıcıoğlu Cad. (Çetin Emeç–İnönü)",region:"Balgat",path:[[39.9010,32.8045],[39.8965,32.8110],[39.8920,32.8170]]},
 ];
-function parseCoordsLatLng(str){return str.trim().split(/\s+/).map(c=>{const[ln,la]=c.split(',').map(Number);return[la,ln];});}
 
-async function loadKML(){
-  for(let i=0;i<PROXIES.length;i++){
-    try{
-      status.textContent=`Kapalı yol verisi yükleniyor… (${i+1}/${PROXIES.length})`;
-      const r=await fetch(PROXIES[i](KML_URL),{signal:AbortSignal.timeout(8000)});
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      const kml=await r.text();
-      if(!kml||kml.length<50||!kml.includes('Placemark'))throw new Error('geçersiz');
-      if(renderKML(kml))return;
-      throw new Error('placemark yok');
-    }catch(e){console.warn('Proxy '+(i+1)+':',e.message);}
-  }
-  status.textContent='Kapalı yol verisi yüklenemedi';setTimeout(()=>status.style.display='none',2500);
-}
+// Kırmızı alan çemberleri (görsel)
+const ZONES=[
+  {name:"Cumhurbaşkanlığı Külliyesi – Kırmızı Alan",center:[39.9252,32.7997],radius:1800},
+  {name:"Çankaya Otel Bölgesi – Kırmızı Alan",center:[39.8950,32.8680],radius:1100},
+];
 
-// Bir çizginin her segmenti için dar, hizalı tampon poligon üret
-function bufferLine(coordsLatLng,meters){
+let avoidPolygons=[];
+
+function bufferLine(path,meters){
   const polys=[];
-  const latRef=coordsLatLng[0][0]*Math.PI/180;
-  const mLat=meters/111000;                          // enlemde metre→derece
-  const mLng=meters/(111000*Math.cos(latRef));       // boylamda metre→derece (enlem düzeltmeli)
-  for(let i=0;i<coordsLatLng.length-1;i++){
-    const [la1,ln1]=coordsLatLng[i],[la2,ln2]=coordsLatLng[i+1];
-    const dLa=la2-la1,dLn=ln2-ln1;
-    const len=Math.sqrt(dLa*dLa+dLn*dLn)||1;
-    // segmente dik birim normal (derece-ölçekli)
-    const nLa=(-dLn/len)*mLat, nLn=(dLa/len)*mLng;
-    // segmenti uçlardan biraz uzat ki kavşaklarda boşluk kalmasın ama taşma olmasın
-    const eLa=(dLa/len)*mLat*0.5, eLn=(dLn/len)*mLng*0.5;
-    const ring=[
-      [ln1-eLn+nLn,la1-eLa+nLa],
-      [ln2+eLn+nLn,la2+eLa+nLa],
-      [ln2+eLn-nLn,la2+eLa-nLa],
-      [ln1-eLn-nLn,la1-eLa-nLa],
-      [ln1-eLn+nLn,la1-eLa+nLa]
-    ];
-    polys.push(ring);
+  const latRef=path[0][0]*Math.PI/180;
+  const mLat=meters/111000, mLng=meters/(111000*Math.cos(latRef));
+  for(let i=0;i<path.length-1;i++){
+    const [la1,ln1]=path[i],[la2,ln2]=path[i+1];
+    const dLa=la2-la1,dLn=ln2-ln1,len=Math.sqrt(dLa*dLa+dLn*dLn)||1;
+    const nLa=(-dLn/len)*mLat,nLn=(dLa/len)*mLng;
+    const eLa=(dLa/len)*mLat*0.4,eLn=(dLn/len)*mLng*0.4;
+    polys.push([[ln1-eLn+nLn,la1-eLa+nLa],[ln2+eLn+nLn,la2+eLa+nLa],[ln2+eLn-nLn,la2+eLa-nLa],[ln1-eLn-nLn,la1-eLa-nLa],[ln1-eLn+nLn,la1-eLa+nLa]]);
   }
   return polys;
 }
 
-function renderKML(kml){
-  const doc=new DOMParser().parseFromString(kml,'text/xml');
-  const pms=doc.querySelectorAll('Placemark');
-  if(!pms.length)return false;
-  roadLayer.clearLayers();closedLines=[];avoidPolygons=[];
+function drawClosed(){
   const all=[];
-  pms.forEach(pm=>{
-    const name=pm.querySelector('name')?.textContent||'Kapalı Bölge';
-    const desc=pm.querySelector('description')?.textContent||'';
-    const lc=pm.querySelector('LineString coordinates');
-    if(lc){const coords=parseCoordsLatLng(lc.textContent);
-      closedLines.push(coords);
-      bufferLine(coords,22).forEach(p=>avoidPolygons.push(p));
-      all.push(L.polyline(coords,{pane:'closedPane',color:'#dc2626',weight:5,opacity:.9})
-        .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}<span class="pop-tag">⛔ Trafiğe Kapalı</span>`).addTo(roadLayer));}
-    const poly=pm.querySelector('Polygon outerBoundaryIs LinearRing coordinates');
-    if(poly){const coords=parseCoordsLatLng(poly.textContent);
-      const ring=coords.map(([la,ln])=>[ln,la]);
-      if(ring.length&&(ring[0][0]!==ring[ring.length-1][0]||ring[0][1]!==ring[ring.length-1][1]))ring.push(ring[0]);
-      avoidPolygons.push(ring);
-      all.push(L.polygon(coords,{pane:'closedPane',color:'#dc2626',fillColor:'#dc2626',fillOpacity:.12,weight:2})
-        .bindPopup(`<div class="pop-title">${name}</div>`).addTo(roadLayer));}
-    const pc=pm.querySelector('Point coordinates');
-    if(pc){const[ln,la]=pc.textContent.trim().split(',').map(Number);
-      all.push(L.circleMarker([la,ln],{pane:'closedPane',radius:7,fillColor:'#dc2626',color:'#fff',weight:2,fillOpacity:.9})
-        .bindPopup(`<div class="pop-title">${name}</div>${desc?`<div style="font-size:.75rem;color:#6b7280;margin-top:2px">${desc}</div>`:''}`).addTo(roadLayer));}
+  // Kırmızı alan çemberleri
+  ZONES.forEach(z=>{
+    L.circle(z.center,{pane:'closedPane',radius:z.radius,color:'#dc2626',fillColor:'#dc2626',fillOpacity:.05,weight:1.5,dashArray:'5 5'})
+      .bindPopup(`<div class="pop-title">${z.name}</div><span class="pop-tag">🟥 İzinli araç dışında giriş yasak</span>`).addTo(roadLayer);
   });
-  if(!all.length)return false;
-  try{map.fitBounds(L.featureGroup(all).getBounds(),{padding:[40,40]});}catch(e){}
+  // Kapalı caddeler
+  CLOSED.forEach(r=>{
+    bufferLine(r.path,24).forEach(p=>avoidPolygons.push(p));
+    const line=L.polyline(r.path,{pane:'closedPane',color:'#dc2626',weight:5,opacity:.9})
+      .bindPopup(`<div class="pop-title">${r.name}</div><div style="font-size:.74rem;color:#6b7280;margin:1px 0 2px">${r.region}</div><span class="pop-tag">⛔ Trafiğe Kapalı</span>`)
+      .addTo(roadLayer);
+    all.push(line);
+  });
+  if(all.length){try{map.fitBounds(L.featureGroup(all).getBounds(),{padding:[40,40]});}catch(e){}}
   status.style.display='none';
-  return true;
 }
-loadKML();
+drawClosed();
 
 // ═══ ADRES AUTOCOMPLETE ══════════════════════════════════════════════════════
 const endpoints={a:{lat:null,lng:null,label:null},b:{lat:null,lng:null,label:null}};
@@ -274,45 +270,26 @@ async function findRoute(){
   box.style.display='block';box.className='result-warn';box.innerHTML='Rota hesaplanıyor (kapalı yollardan kaçınılıyor)…';
   routeLayer.clearLayers();
   const {a,b}=endpoints;
-
-  const body={
-    coordinates:[[a.lng,a.lat],[b.lng,b.lat]],
-    instructions:false
-  };
-  if(avoidPolygons.length){
-    body.options={avoid_polygons:{type:'MultiPolygon',coordinates:avoidPolygons.map(ring=>[ring])}};
-  }
-
+  const body={coordinates:[[a.lng,a.lat],[b.lng,b.lat]],instructions:false};
+  if(avoidPolygons.length)body.options={avoid_polygons:{type:'MultiPolygon',coordinates:avoidPolygons.map(r=>[r])}};
   try{
     const res=await fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson',{
-      method:'POST',
-      headers:{'Authorization':ORS_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify(body)
-    });
+      method:'POST',headers:{'Authorization':ORS_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!res.ok){
       const err=await res.text();
-      // avoid_polygons yüzünden rota bulunamazsa kullanıcıyı bilgilendir
       if(res.status===404||err.includes('2010')||err.includes('routable')){
-        box.className='result-closed';
-        box.innerHTML=`⛔ Kapalı yollardan kaçınarak bu iki nokta arasında rota bulunamadı.<div class="meta">Hedef tamamen kapalı bölge içinde olabilir. Toplu taşıma (metro) kullanmayı değerlendirin.</div>`;
-        return;
+        box.className='result-closed';box.innerHTML=`⛔ Kapalı yollardan kaçınarak rota bulunamadı.<div class="meta">Hedef kapalı bölge içinde olabilir. Toplu taşıma (metro) değerlendirin.</div>`;return;
       }
       throw new Error('ORS '+res.status);
     }
-    const data=await res.json();
-    const feat=data.features&&data.features[0];
+    const data=await res.json();const feat=data.features&&data.features[0];
     if(!feat){box.className='result-warn';box.innerHTML='⚠️ Rota bulunamadı.';return;}
-
     const coords=feat.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
     L.polyline(coords,{pane:'routePane',color:'#2563eb',weight:6,opacity:.9}).addTo(routeLayer);
     try{map.fitBounds(L.polyline(coords).getBounds(),{padding:[50,50]});}catch(e){}
-
-    const sum=feat.properties.summary;
-    box.className='result-safe';
-    box.innerHTML=`✅ Kapalı yollardan kaçınan rota çizildi.`;
+    box.className='result-safe';box.innerHTML=`✅ Kapalı yollardan kaçınan rota çizildi.`;
   }catch(e){
-    box.className='result-warn';
-    box.innerHTML='⚠️ Rota servisine ulaşılamadı. Lütfen tekrar deneyin.<div class="meta">'+e.message+'</div>';
+    box.className='result-warn';box.innerHTML='⚠️ Rota servisine ulaşılamadı. Lütfen tekrar deneyin.';
   }
 }
 </script>
